@@ -7,7 +7,7 @@ virtualized dashboard — with a full analyst workflow (drill-down,
 explainability, review, manual override) and compliance-controlled rule
 thresholds that update live, no redeploy required.
 
-**[Live demo →](#)** *(add your deployed URL here once you've followed `docs/DEPLOYMENT.md`)*
+
 
 ## Why this exists
 
