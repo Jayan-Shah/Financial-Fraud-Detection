@@ -10,7 +10,7 @@ A production-shaped, multi-tenant fraud detection system that streams transactio
 [![React](https://img.shields.io/badge/React-TypeScript-61DAFB?logo=react&logoColor=white)](frontend)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Live Demo](#) · [Quick Start](#-quick-start) · [Architecture](#-architecture) · [Docs](#-documentation)
+[Live Demo](https://financial-fraud-detection-chi.vercel.app/) · [Quick Start](#-quick-start) · [Architecture](#-architecture) · [Docs](#-documentation)
 
 </div>
 
