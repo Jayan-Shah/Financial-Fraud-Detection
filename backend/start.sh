@@ -1,6 +1,13 @@
 #!/bin/sh
 set -e
 
+echo "==> Configuring DB URL for Alembic migrations..."
+# Create a synchronous connection string by stripping out '+asyncpg'
+SYNC_DB_URL=$(echo $DATABASE_URL | sed 's/+asyncpg//')
+
+# Inject the Render Neon URL into alembic.ini (overwriting the local 'postgres' one)
+sed -i "s|^sqlalchemy\.url.*|sqlalchemy.url = ${SYNC_DB_URL}|" alembic.ini
+
 echo "==> Running database migrations..."
 alembic upgrade head
 
