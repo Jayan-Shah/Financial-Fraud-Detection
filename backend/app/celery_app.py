@@ -3,11 +3,15 @@ from celery import Celery
 
 from app.config import settings
 
-# --- RENDER / UPSTASH REDIS FIX ---
-# Grab the Upstash URL from Render's environment. 
-# Using the same URL for both ensures we stay on Database 0 (required by Upstash Free Tier).
 redis_url = os.getenv("REDIS_URL", settings.celery_broker_url)
-# ----------------------------------
+
+# --- CELERY UPSTASH SSL FIX ---
+# Celery strictly requires 'ssl_cert_reqs' when using secure 'rediss://' URLs
+if redis_url and redis_url.startswith("rediss://") and "ssl_cert_reqs" not in redis_url:
+    # Append the parameter (using ? if no other params exist, otherwise &)
+    separator = "&" if "?" in redis_url else "?"
+    redis_url += f"{separator}ssl_cert_reqs=CERT_NONE"
+# ------------------------------
 
 celery_app = Celery(
     "fraud_detection",
