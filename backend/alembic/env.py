@@ -1,3 +1,4 @@
+import os
 import sys
 from logging.config import fileConfig
 from pathlib import Path
@@ -12,7 +13,19 @@ from app.database import Base
 from app import models  # noqa: F401 - ensures models are registered on Base.metadata
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.sync_database_url)
+
+# --- NEW RENDER-SAFE URL LOGIC ---
+db_url = os.getenv("DATABASE_URL")
+
+if db_url:
+    # If on Render, grab the environment variable and strip the async driver
+    db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+else:
+    # If local, fall back to your Pydantic settings
+    db_url = settings.sync_database_url
+
+config.set_main_option("sqlalchemy.url", db_url)
+# ---------------------------------
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
