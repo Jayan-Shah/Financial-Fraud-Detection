@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fraud_db
+    ports:
+      - "5433:5432"  # host 5433 avoids clashing with other local Postgres instances
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ../backend
+    env_file: ../backend/.env.example
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.seed &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  celery-worker:
+    build: ../backend
+    env_file: ../backend/.env.example
+    depends_on:
+      - backend
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4
+
+  frontend:
+    build: ../frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+  mock-generator:
+    build: ../mock-data-generator
+    depends_on:
+      - backend
+    environment:
+      TARGET_URL: http://backend:8000/api/transactions/
+      RATE_PER_SECOND: "20"
+      # Set in infra/.env after your first `docker compose up` - grab the
+      # printed API key from `docker compose logs backend | grep "API key"`,
+      # then `docker compose up -d mock-generator` again to pick it up.
+      ORG_API_KEY: ${ORG_API_KEY:-}
+
+volumes:
+  postgres_data:
