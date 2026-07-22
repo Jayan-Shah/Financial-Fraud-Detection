@@ -4,9 +4,6 @@
       "source": "/api/:path*",
       "destination": "https://financial-fraud-detection-1-qnfa.onrender.com/api/:path*"
     },
-    {
-      "source": "/ws/:path*",
-      "destination": "https://financial-fraud-detection-1-qnfa.onrender.com/ws/:path*"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

@@ -1,5 +1,8 @@
 import type { Middleware } from "@reduxjs/toolkit";
-import { setConnected, transactionReceived } from "../features/transactions/transactionsSlice";
+import {
+  setConnected,
+  transactionReceived,
+} from "../features/transactions/transactionsSlice";
 import { logout } from "../features/auth/authSlice";
 import { getToken } from "../api";
 import type { Transaction } from "../types";
@@ -29,8 +32,23 @@ export const websocketMiddleware: Middleware = (store) => {
     const token = getToken();
     if (!token) return; // not logged in yet - nothing to authenticate the socket with
 
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    socket = new WebSocket(`${protocol}://${window.location.host}/ws/transactions?token=${encodeURIComponent(token)}`);
+    // In local dev, same-origin (via Vite's proxy) works fine for both
+    // API calls and the WebSocket. In production on Vercel, the API is
+    // reachable through vercel.json's rewrite, but Vercel does not
+    // reliably tunnel WebSocket upgrades - so the WS connection needs to
+    // go straight to the backend instead. VITE_WS_HOST (set in Vercel's
+    // project environment variables) controls this; if it's unset, we
+    // fall back to same-origin, which is correct for local dev.
+    const wsHost = import.meta.env.VITE_WS_HOST || window.location.host;
+    const protocol =
+      wsHost === window.location.host && window.location.protocol !== "https:"
+        ? "ws"
+        : "wss";
+    socket = new WebSocket(
+      `${protocol}://${wsHost}/ws/transactions?token=${encodeURIComponent(
+        token
+      )}`
+    );
 
     socket.onopen = () => {
       retryDelay = 1000;
